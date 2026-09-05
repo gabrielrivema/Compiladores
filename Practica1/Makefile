@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude -std=c11
+CFLAGS = -std=c11 -Wall -Wextra -Wpedantic
 
 SRCS = src/main.c src/lexer/lexer.c src/lexer/token.c
 OBJS = $(SRCS:.c=.o)
@@ -19,12 +19,25 @@ clean:
 test: $(TARGET)
 	@echo "Ejecutando pruebas..."
 	@mkdir -p tests
-	@for file in tests/*.mc; do \
+	@for file in tests/public/inputs/*.mc; do \
 		if [ -f "$$file" ]; then \
 			echo "Probando $$file:"; \
 			./$(TARGET) "$$file"; \
 			echo "---------------------------"; \
 		fi \
 	done
+
+
+test_eq: $(TARGET)
+	@echo "Ejecutando pruebas del equipo..."
+	@mkdir -p tests
+	@for file in tests/equipo/inputs/*.mc; do \
+		if [ -f "$$file" ]; then \
+			echo "Probando $$file:"; \
+			./$(TARGET) "$$file"; \
+			echo "---------------------------"; \
+		fi \
+	done
+
 
 .PHONY: all clean test

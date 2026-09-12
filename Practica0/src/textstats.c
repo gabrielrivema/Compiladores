@@ -6,13 +6,30 @@
 
 size_t text_length(const char *text) {
     /* TODO 1: recorrer text hasta encontrar '\0'. */
-    (void)text;
-    return 0;
+    size_t length = 0;
+
+    if (text == NULL)
+        return 0;
+
+    //Lee hasta encontrar '\0'
+    while (text[length] != '\0')
+        length++;
+
+    return length;
 }
 
 CharType classify_char(int c) {
     /* TODO 2: clasificar letras ASCII, dígitos, blancos y otros. */
-    (void)c;
+    
+    if((c >= 'A' && c<='Z') || (c >= 'a' && c<='z'))
+        return CHAR_LETTER;
+    
+    if (c >= '0' && c <= '9')
+        return CHAR_DIGIT;
+
+    if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+        return CHAR_SPACE;
+
     return CHAR_OTHER;
 }
 
@@ -41,14 +58,26 @@ int buffer_append(TextBuffer *buffer, char c) {
 
         /*
          * TODO 3:
-         * - calcular una capacidad mayor;
          * - verificar que el cálculo no desborde SIZE_MAX;
-         * - llamar realloc mediante el puntero temporal new_data;
-         * - actualizar data y capacity solamente si tiene éxito.
          */
-        (void)new_capacity;
-        (void)new_data;
-        return 0;
+        if (buffer->capacity > SIZE_MAX / 2){
+            if (buffer->capacity > SIZE_MAX - 2)
+                return 0;
+        } else {
+            // * - calcular una capacidad mayor;
+            new_capacity = buffer->capacity * 2;
+            if (new_capacity < buffer->length + 2)
+                new_capacity = buffer->length + 2;
+        }
+        
+        // * - llamar realloc mediante el puntero temporal new_data;
+        new_data = realloc(buffer->data, new_capacity);
+        if (new_data == NULL)
+            return 0;
+        // * - actualizar data y capacity solamente si tiene éxito.
+        buffer->data = new_data;
+        buffer->capacity = new_capacity;
+
     }
 
     buffer->data[buffer->length] = c;
@@ -105,14 +134,23 @@ int analyze_file(const char *path, TextStats *stats) {
 
     /*
      * TODO 4:
-     * mientras fgetc no devuelva EOF:
-     * - incrementar characters;
-     * - clasificar el byte y actualizar su contador;
-     * - agregarlo al buffer;
-     * - manejar un fallo de buffer_append.
-    */
-    (void)c;
-    (void)stats;
+     * mientras fgetc no devuelva EOF:*/
+    while ((c=fgetc(file)) != EOF){
+        // * - incrementar characters;
+        stats->characters++;        
+
+        // * - clasificar el byte y actualizar su contador;
+        CharType type = classify_char(c);
+        update_counter(stats, type);
+
+        // * - agregarlo al buffer;
+        // * - manejar un fallo de buffer_append.
+        if (!buffer_append(&stats->content, (char)c)){
+            fprintf(stderr, "Error: No se pudo reservar la memoria");
+            fclose(file);
+            return 2;
+        }
+    }
 
     if (ferror(file)) {
         fprintf(stderr, "Error: no se pudo leer '%s'.\n", path);

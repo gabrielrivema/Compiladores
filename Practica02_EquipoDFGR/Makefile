@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Iinclude 
+CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Iinclude
 
 SRCS = src/main.c src/lexer/lexer.c src/lexer/token.c
 OBJS = $(SRCS:.c=.o)

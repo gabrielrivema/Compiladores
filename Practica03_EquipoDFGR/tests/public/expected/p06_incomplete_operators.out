@@ -1,0 +1,4 @@
+1:0 ERROR !
+1:2 ERROR &
+1:4 ERROR |
+2:0 TOKEN_EOF

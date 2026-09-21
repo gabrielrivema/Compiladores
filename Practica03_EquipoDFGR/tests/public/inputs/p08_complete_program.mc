@@ -7,3 +7,4 @@ while (contador > 0 && activo) {
 }
 
 activo = false;
+

@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Iinclude
 
-SRCS = src/main.c src/lexer/lexer.c src/lexer/token.c
+SRCS = src/main.c src/lexer/lexer.c src/lexer/token.c src/parser/parser.c
 OBJS = $(SRCS:.c=.o)
 TARGET = minic
 

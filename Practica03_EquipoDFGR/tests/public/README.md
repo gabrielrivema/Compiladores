@@ -1,9 +1,8 @@
-# Pruebas públicas — Práctica 2
+# Pruebas públicas — Práctica 3
 
 ## Uso
 
-Estas pruebas comparan únicamente la salida estándar producida por `minic`.
-Desde la raíz del proyecto del equipo puede ejecutarse:
+Desde la raíz del proyecto del equipo:
 
 ```text
 sh tests/public/run_public_tests.sh
@@ -15,41 +14,52 @@ También puede indicarse otra ruta para el ejecutable:
 sh tests/public/run_public_tests.sh ./ruta/al/minic
 ```
 
-Cada archivo de `inputs/` debe producir exactamente el archivo del mismo nombre
-ubicado en `expected/`, cambiando la extensión `.mc` por `.out`.
+## Qué comprueban
 
-Ejemplo manual:
+Para programas válidos, el ejecutor verifica:
 
-```text
-./minic tests/public/inputs/p01_identifiers.mc > resultado.out
-diff -u tests/public/expected/p01_identifiers.out resultado.out
-```
+- código de salida `0`;
+- el mensaje de éxito exacto en `stdout`;
+- ausencia de diagnósticos en `stderr`.
 
-Los diagnósticos operativos no deben mezclarse con la secuencia de tokens en
-`stdout`.
+Para programas inválidos, verifica:
+
+- código de salida distinto de cero;
+- ausencia del mensaje de éxito y de otra salida en `stdout`;
+- presencia de diagnósticos en `stderr`;
+- forma general y posición para los casos sintácticos.
+
+La redacción del elemento esperado y el número exacto de diagnósticos pueden
+depender de la recuperación implementada. Por ello, salvo en el caso diseñado
+explícitamente con dos errores independientes, estas pruebas no exigen un texto
+completo ni una cantidad exacta de mensajes.
 
 ## Casos
 
-| Entrada | Propósito principal |
-|---|---|
-| `p01_identifiers.mc` | Identificadores válidos y máxima longitud. |
-| `p02_reserved_words.mc` | Todas las palabras reservadas y booleanos. |
-| `p03_case_sensitive.mc` | Distinción entre mayúsculas y minúsculas. |
-| `p04_booleans.mc` | Booleanos dentro de declaraciones y asignaciones. |
-| `p05_compound_operators.mc` | Todos los operadores compuestos. |
-| `p06_incomplete_operators.mc` | `!`, `&` y `|` como errores independientes. |
-| `p07_comments.mc` | Comentarios después de otros tokens y en varias líneas. |
-| `p08_comment_at_eof.mc` | Comentario al final del archivo sin salto final. |
-| `p09_slash_and_comments.mc` | Distinción entre división y comentario. |
-| `p10_longest_match.mc` | Prioridad y máxima coincidencia. |
-| `p11_error_recovery.mc` | Recuperación después de varios errores. |
-| `p12_complete_lexer.mc` | Combinación de todas las categorías principales. |
-| `p13_crlf.mc` | Comentarios y posiciones con terminadores CRLF. |
+| Entrada | Resultado | Propósito principal |
+|---|---|---|
+| `p01_empty.mc` | válido | Programa vacío y `TOKEN_EOF`. |
+| `p02_declarations.mc` | válido | Declaraciones con y sin inicialización. |
+| `p03_assignment_print.mc` | válido | Asignación y sentencia `print`. |
+| `p04_expression_precedence.mc` | válido | Todos los niveles de expresiones y paréntesis. |
+| `p05_if_else.mc` | válido | Condicionales con y sin `else`. |
+| `p06_dangling_else.mc` | válido | Asociación del `else` con el `if` más cercano. |
+| `p07_while_blocks.mc` | válido | Ciclos, bloques vacíos y anidamiento. |
+| `p08_complete_program.mc` | válido | Integración de las construcciones principales. |
+| `p09_missing_semicolon.mc` | inválido | Punto y coma ausente. |
+| `p10_missing_parenthesis.mc` | inválido | Paréntesis derecho ausente. |
+| `p11_missing_brace.mc` | inválido | Llave de cierre ausente al llegar a EOF. |
+| `p12_incomplete_expression.mc` | inválido | Expresión sin operando. |
+| `p13_operator_without_operand.mc` | inválido | Operador binario sin operando izquierdo. |
+| `p14_unexpected_token.mc` | inválido | Token que no inicia una sentencia. |
+| `p15_multiple_errors.mc` | inválido | Dos errores y recuperación entre sentencias. |
+| `p16_lexical_error.mc` | inválido | `ERROR` léxico sin diagnóstico sintáctico duplicado. |
+| `p17_trailing_content.mc` | inválido | Contenido inesperado tras una sentencia válida. |
 
 ## Alcance
 
-Estas pruebas son públicas y mínimas. No comprueban todas las combinaciones
-posibles ni sustituyen las pruebas que debe incluir cada equipo. Durante la
-evaluación podrán utilizarse casos adicionales que respeten la especificación
-publicada.
+Estas pruebas son públicas y mínimas. No cubren todas las combinaciones de la
+gramática, la recuperación ni la administración de memoria. Cada equipo debe
+diseñar e incluir pruebas propias. Durante la evaluación podrán usarse casos
+adicionales que respeten los requisitos publicados.
 

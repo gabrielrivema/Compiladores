@@ -31,30 +31,39 @@ static TokenType check_keyword(const char *str) {
     return IDENTIFIER;
 }
 
-int simple;
+int lexer_init(Lexer *lexer, FILE *source){
+    if(!lexer || !source) return 0;
 
-int lexer_scan(FILE *file) {
-    size_t line = 1;
-    size_t column = 0;
+    lexer->file = source;
+    lexer->line = 1;
+    lexer->column = 0;
+    return 1;
+}
+
+void lexer_destroy(Lexer *lexer){
+    if(lexer)
+        lexer->file = NULL;
+}
+
+LexerStatus lexer_next_token(Lexer *lexer, Token *out){
+    if(!lexer || !out || !lexer->file)
+        return LEXER_STATUS_IO_ERROR;
+
     int c;
 
-    if (file == NULL) {
-        return 2;
-    }
-
-    while ((c = fgetc(file)) != EOF) {
-        size_t token_line = line;
-        size_t token_column = column;
+    while ((c = fgetc(lexer->file)) != EOF) {
+        size_t token_line = lexer->line;
+        size_t token_column = lexer->column;
 
         if(c == '\r') {
-            int next = fgetc(file);
+            int next = fgetc(lexer->file);
             if (next != '\n') {
-                ungetc(next, file);
+                ungetc(next, lexer->file);
             } else {
                 c = next;
             }
         }
-        advance_position(c, &line, &column);
+        advance_position(c, &lexer->line, &lexer->column);
 
         if (is_ignored_space(c)) {
             continue;
@@ -62,29 +71,24 @@ int lexer_scan(FILE *file) {
 
         // primero se revisa la diagonal porque también puede iniciar un comentario
         if (c == '/') {
-            int next = fgetc(file);
+            int next = fgetc(lexer->file);
             if (next == '/') {
                 // Si hay otra es un comentario de una sola linea
-                advance_position(next, &line, &column);
-                while ((next = fgetc(file)) != EOF) {
+                advance_position(next, &lexer->line, &lexer->column);
+                while ((next = fgetc(lexer->file)) != EOF) {
                     if (next == '\r') {
-                        int next2 = fgetc(file);
+                        int next2 = fgetc(lexer->file);
                         if (next2 == '\n') next = '\n';
-                        else if (next2 != EOF) ungetc(next2, file);
+                        else if (next2 != EOF) ungetc(next2, lexer->file);
                     }
-                    advance_position(next, &line, &column);
+                    advance_position(next, &lexer->line, &lexer->column);
                     if (next == '\n' || next == '\r') break;
                 }
                 continue;
             } else {
-                if (next != EOF) ungetc(next, file);
-                Token token;
-                if (!token_init(&token, SLASH, "/", token_line, token_column)) {
-                    fprintf(stderr, "Error: no se pudo reservar memoria.\n"); return 2;
-                }
-                token_print(&token);
-                token_destroy(&token);
-                continue;
+                if (next != EOF) ungetc(next, lexer->file);
+                if (!token_init(out, SLASH, "/", token_line, token_column)) return LEXER_STATUS_MEMORY_ERROR;
+                return LEXER_STATUS_OK;
             }
         }
 
@@ -93,34 +97,32 @@ int lexer_scan(FILE *file) {
             size_t cap = 16;
             size_t len = 0;
             char *lexeme = malloc(cap);
-            if (!lexeme) {
-                fprintf(stderr, "Error: no se pudo reservar memoria.\n"); return 2;
-            }
+            if (!lexeme) return LEXER_STATUS_MEMORY_ERROR;
             lexeme[len++] = (char)c;
 
             int next;
-            while ((next = fgetc(file)) != EOF && (isalnum(next) || next == '_')) {
-                advance_position(next, &line, &column);
+            while ((next = fgetc(lexer->file)) != EOF && (isalnum(next) || next == '_')) {
+                advance_position(next, &lexer->line, &lexer->column);
                 if (len + 1 >= cap) {
                     cap *= 2;
                     char *temp = realloc(lexeme, cap);
-                    if (!temp) { free(lexeme); return 2; }
+                    if (!temp) { 
+                        free(lexeme); 
+                        return LEXER_STATUS_MEMORY_ERROR; 
+                    }
                     lexeme = temp;
                 }
                 lexeme[len++] = (char)next;
             }
-            if (next != EOF) ungetc(next, file);
+            if (next != EOF) ungetc(next, lexer->file);
             lexeme[len] = '\0';
 
             TokenType t_type = check_keyword(lexeme);
-            Token token;
-            if (!token_init(&token, t_type, lexeme, token_line, token_column)) {
-                free(lexeme); return 2;
+            if (!token_init(out, t_type, lexeme, token_line, token_column)) {
+                free(lexeme); 
+                return LEXER_STATUS_MEMORY_ERROR;
             }
-            token_print(&token);
-            token_destroy(&token);
-            free(lexeme);
-            continue;
+            return LEXER_STATUS_OK;
         }
 
         // Números ent
@@ -128,140 +130,149 @@ int lexer_scan(FILE *file) {
             size_t cap = 16;
             size_t len = 0;
             char *lexeme = malloc(cap);
-            if (!lexeme) {
-                fprintf(stderr, "Error: no se pudo reservar memoria.\n"); return 2;
-            }
+            if (!lexeme) return LEXER_STATUS_MEMORY_ERROR;
             lexeme[len++] = (char)c;
 
             int next;
-            while ((next = fgetc(file)) != EOF && isdigit(next)) {
-                advance_position(next, &line, &column);
+            while ((next = fgetc(lexer->file)) != EOF && isdigit(next)) {
+                advance_position(next, &lexer->line, &lexer->column);
                 if (len + 1 >= cap) {
                     cap *= 2;
                     char *temp = realloc(lexeme, cap);
-                    if (!temp) { free(lexeme); return 2; }
+                    if (!temp) { 
+                        free(lexeme); 
+                        return LEXER_STATUS_MEMORY_ERROR; 
+                    }
                     lexeme = temp;
                 }
                 lexeme[len++] = (char)next;
             }
-            if (next != EOF) ungetc(next, file);
+            if (next != EOF) ungetc(next, lexer->file);
             lexeme[len] = '\0';
 
-            Token token;
-            if (!token_init(&token, INTEGER, lexeme, token_line, token_column)) {
-                free(lexeme); return 2;
+            if (!token_init(out, INTEGER, lexeme, token_line, token_column)) {
+                free(lexeme); 
+                return LEXER_STATUS_MEMORY_ERROR;
             }
-            token_print(&token);
-            token_destroy(&token);
-            free(lexeme);
-            continue;
+            return LEXER_STATUS_OK;
         }
 
         // Operadores
-        Token token;
+
         int next;
         int token_created = 1;
 
         switch(c) {
             case '=':
-                next = fgetc(file);
+                next = fgetc(lexer->file);
                 if (next == '=') {
-                    advance_position(next, &line, &column);
-                    token_created = token_init(&token, EQUAL, "==", token_line, token_column);
+                    advance_position(next, &lexer->line, &lexer->column);
+                    token_created = token_init(out, EQUAL, "==", token_line, token_column);
                 } else {
-                    if (next != EOF) ungetc(next, file);
-                    token_created = token_init(&token, ASSIGN, "=", token_line, token_column);
+                    if (next != EOF) ungetc(next, lexer->file);
+                    token_created = token_init(out, ASSIGN, "=", token_line, token_column);
                 }
                 break;
             case '!':
-                next = fgetc(file);
+                next = fgetc(lexer->file);
                 if (next == '=') {
-                    advance_position(next, &line, &column);
-                    token_created = token_init(&token, NOT_EQUAL, "!=", token_line, token_column);
+                    advance_position(next, &lexer->line, &lexer->column);
+                    token_created = token_init(out, NOT_EQUAL, "!=", token_line, token_column);
                 } else {
-                    if (next != EOF) ungetc(next, file);
+                    if (next != EOF) ungetc(next, lexer->file);
                     char lex[2] = {(char)c, '\0'};
-                    token_created = token_init(&token, ERROR, lex, token_line, token_column);
+                    token_created = token_init(out, ERROR, lex, token_line, token_column);
                 }
                 break;
             case '<':
-                next = fgetc(file);
+                next = fgetc(lexer->file);
                 if (next == '=') {
-                    advance_position(next, &line, &column);
-                    token_created = token_init(&token, LESS_EQUAL, "<=", token_line, token_column);
+                    advance_position(next, &lexer->line, &lexer->column);
+                    token_created = token_init(out, LESS_EQUAL, "<=", token_line, token_column);
                 } else {
-                    if (next != EOF) ungetc(next, file);
-                    token_created = token_init(&token, LESS, "<", token_line, token_column);
+                    if (next != EOF) ungetc(next, lexer->file);
+                    token_created = token_init(out, LESS, "<", token_line, token_column);
                 }
                 break;
             case '>':
-                next = fgetc(file);
+                next = fgetc(lexer->file);
                 if (next == '=') {
-                    advance_position(next, &line, &column);
-                    token_created = token_init(&token, GREATER_EQUAL, ">=", token_line, token_column);
+                    advance_position(next, &lexer->line, &lexer->column);
+                    token_created = token_init(out, GREATER_EQUAL, ">=", token_line, token_column);
                 } else {
-                    if (next != EOF) ungetc(next, file);
-                    token_created = token_init(&token, GREATER, ">", token_line, token_column);
+                    if (next != EOF) ungetc(next, lexer->file);
+                    token_created = token_init(out, GREATER, ">", token_line, token_column);
                 }
                 break;
             case '&':
-                next = fgetc(file);
+                next = fgetc(lexer->file);
                 if (next == '&') {
-                    advance_position(next, &line, &column);
-                    token_created = token_init(&token, AND, "&&", token_line, token_column);
+                    advance_position(next, &lexer->line, &lexer->column);
+                    token_created = token_init(out, AND, "&&", token_line, token_column);
                 } else {
-                    if (next != EOF) ungetc(next, file);
+                    if (next != EOF) ungetc(next, lexer->file);
                     char lex[2] = {(char)c, '\0'};
-                    token_created = token_init(&token, ERROR, lex, token_line, token_column);
+                    token_created = token_init(out, ERROR, lex, token_line, token_column);
                 }
                 break;
             case '|':
-                next = fgetc(file);
+                next = fgetc(lexer->file);
                 if (next == '|') {
-                    advance_position(next, &line, &column);
-                    token_created = token_init(&token, OR, "||", token_line, token_column);
+                    advance_position(next, &lexer->line, &lexer->column);
+                    token_created = token_init(out, OR, "||", token_line, token_column);
                 } else {
-                    if (next != EOF) ungetc(next, file);
+                    if (next != EOF) ungetc(next, lexer->file);
                     char lex[2] = {(char)c, '\0'};
-                    token_created = token_init(&token, ERROR, lex, token_line, token_column);
+                    token_created = token_init(out, ERROR, lex, token_line, token_column);
                 }
                 break;
-            case '+': token_created = token_init(&token, PLUS, "+", token_line, token_column); break;
-            case '-': token_created = token_init(&token, MINUS, "-", token_line, token_column); break;
-            case '*': token_created = token_init(&token, STAR, "*", token_line, token_column); break;
-            case '(': token_created = token_init(&token, LPAREN, "(", token_line, token_column); break;
-            case ')': token_created = token_init(&token, RPAREN, ")", token_line, token_column); break;
-            case '{': token_created = token_init(&token, LBRACE, "{", token_line, token_column); break;
-            case '}': token_created = token_init(&token, RBRACE, "}", token_line, token_column); break;
-            case ';': token_created = token_init(&token, SEMICOLON, ";", token_line, token_column); break;
+            case '+': token_created = token_init(out, PLUS, "+", token_line, token_column); break;
+            case '-': token_created = token_init(out, MINUS, "-", token_line, token_column); break;
+            case '*': token_created = token_init(out, STAR, "*", token_line, token_column); break;
+            case '(': token_created = token_init(out, LPAREN, "(", token_line, token_column); break;
+            case ')': token_created = token_init(out, RPAREN, ")", token_line, token_column); break;
+            case '{': token_created = token_init(out, LBRACE, "{", token_line, token_column); break;
+            case '}': token_created = token_init(out, RBRACE, "}", token_line, token_column); break;
+            case ';': token_created = token_init(out, SEMICOLON, ";", token_line, token_column); break;
             default: {
                 char lex[2] = {(char)c, '\0'};
-                token_created = token_init(&token, ERROR, lex, token_line, token_column);
+                token_created = token_init(out, ERROR, lex, token_line, token_column);
                 break;
             }
         }
 
-        if (!token_created) {
-            fprintf(stderr, "Error: no se pudo reservar memoria.\n");
-            return 2;
-        }
+        return token_created ? LEXER_STATUS_OK : LEXER_STATUS_IO_ERROR;
+    }
 
+    if (ferror(lexer->file)) {
+        return LEXER_STATUS_IO_ERROR;
+    }
+
+    if (!token_init(out, TOKEN_EOF, "", lexer->line, lexer->column)) {
+        return LEXER_STATUS_MEMORY_ERROR;
+    }
+
+    return LEXER_STATUS_OK;
+}
+
+int lexer_scan(FILE *file){
+    Lexer lexer;
+    if(!lexer_init(&lexer, file))
+        return 2;
+
+    Token token;
+    LexerStatus status;
+
+    while((status = lexer_next_token(&lexer, &token)) == LEXER_STATUS_OK){
         token_print(&token);
+        TokenType type = token.type;
         token_destroy(&token);
+        if(type == TOKEN_EOF) break;
     }
 
-    if (ferror(file)) {
-        fprintf(stderr, "Error: no se pudo leer el archivo.\n");
-        return 2;
-    }
+    lexer_destroy(&lexer);
 
-    Token token_eof;
-    if (!token_init(&token_eof, TOKEN_EOF, "", line, column)) {
-        fprintf(stderr, "Error: no se pudo reservar memoria.\n");
-        return 2;
-    }
-
-    token_print(&token_eof);
-    token_destroy(&token_eof);
-    return 0;
+    if(status == LEXER_STATUS_OK)
+        printf("Programa sintacticamente correcto");
+    return (status == LEXER_STATUS_OK) ? 0 : 2;
 }

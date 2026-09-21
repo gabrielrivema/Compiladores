@@ -1,2 +1,0 @@
-// comentario
-true

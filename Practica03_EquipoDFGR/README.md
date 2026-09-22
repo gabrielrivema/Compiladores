@@ -1,9 +1,9 @@
-# Práctica 2 — Analizador léxico completo de MiniC
+# Práctica 3 — Analizador sintáctico descendente recursivo
 
 ## Información general
 
 | Asignatura | Compiladores |
-| Número de práctica | 2 |
+| Número de práctica | 3 |
 | Equipo | DFGR |
 
 ## Integrantes
@@ -14,7 +14,7 @@
 ## Estructura del proyecto
 
 ```text
-Practica2/
+Practica03_EquipoDFGR/
 ├── README.md
 ├── CHANGELOG.md
 ├── Reporte.pdf
@@ -23,18 +23,22 @@ Practica2/
 │   ├── lexer/
 │   │   ├── lexer.c
 │   │   └── token.c
+│   ├── parser/
+│   │   └── parser.c
 │   └── main.c
 ├── include/
-│   └── lexer/
-│       ├── lexer.h
-│       └── token.h
+│   ├── lexer/
+│   │   ├── lexer.h
+│   │   └── token.h
+│   ├── parser/
+│   │   └── parser.h
 └── tests/
     ├── public/
-        ├── expected/
-        ├── inputs/
+    │   ├── expected/
+    │   └── inputs/
     └── equipo/
         ├── expected/
-        ├── inputs/
+        └── inputs/
 ```
 
 ### Módulos implementados
@@ -69,30 +73,32 @@ make clean
 
 ## Funcionalidades implementadas
 
-- [x] Lectura del archivo fuente.
-- [x] Sistema de tokens.
-- [x] Seguimiento de línea y columna.
-- [x] Manejo de espacios en blanco.
-- [x] Símbolos simples y compuestos.
-- [x] Números enteros.
-- [x] Palabras reservadas.
-- [x] Caracteres no reconocidos mediante `ERROR`.
-- [x] Final del archivo mediante `TOKEN_EOF`.
+- [x] El lexer entrega tokens incrementalmente y sin imprimirlos.
+- [x] El parser no inspecciona directamente caracteres del archivo.
+- [x] Cada token y lexema tiene un propietario documentado.
+- [x] Existe al menos un token de anticipación.
+- [x] Las funciones del parser corresponden a responsabilidades separadas.
+- [x] Se reconocen todas las sentencias publicadas.
+- [x] Las expresiones respetan precedencia y asociatividad.
+- [x] Un token `ERROR` no genera además un diagnóstico sintáctico por sí mismo.
+- [x] La recuperación no entra en ciclos ni repite indefinidamente un error.
+- [x] Se consume la entrada completa hasta `TOKEN_EOF`.
+- [x] Sólo los programas válidos imprimen el mensaje de éxito.
+- [x] Los diagnósticos se escriben en `stderr`.
+- [x] Los códigos de salida distinguen éxito de programa inválido.
+- [x] Se liberan tokens, lexemas y estados aun cuando haya errores.
+- [x] El proyecto no construye AST ni realiza validaciones semánticas.
+
 
 ## Pruebas
 
 Las pruebas están divididas en `tests/public/` y `tests/equipo/`. Los casos propios cubren:
 
-- Manejo de varios saltos de línea de diferentes sistemas operativos: (`\n`, `\r\n`, `\r`).
-- Secuencias de múltiples chars no reconocidos seguidos (para asegurar que el lexer se recupera sin abortar y genera varios tokens `ERROR`)
-- Reconocimiento continuo de int separados y combinados con símbolos
+- Secuencias de códigos válidas
+- Secuencias de códigos inválidas, estas pueden ser por un ';' faltante, un '(' faltante entre otras.
 
 Para ejecutar las pruebas, se debe correr el binario contra los archivos de entrada (`.mc`) y comparar la salida estándar con el contenido de los archivos de salida esperada (`.out`), que están en las carpetas `expected/`.
 
-
-## Notas de ejecución
-
-El analizador imprime los tokens reconocidos directamente en stdout con el formato `línea:columna TIPO_TOKEN lexema`. Los errores relacionados con la apertura de archivos o falta de argumentos en la línea de comandos se envían a stderr para evitar contaminar la secuencia de tokens.
 
 
 ## Lista de comprobación

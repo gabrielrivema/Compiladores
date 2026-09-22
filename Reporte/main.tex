@@ -1,0 +1,223 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish, es-tabla]{babel}
+\usepackage{geometry}
+\geometry{top=2.5cm, bottom=2.5cm, left=3cm, right=3cm}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{svg}
+\usepackage{array}
+
+% Configuración de colores para código
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\begin{document}
+
+% --- PORTADA INSTITUCIONAL CORREGIDA ---
+\begin{titlepage}
+    \centering
+    
+    % Encabezado con Escudos en SVG
+    \begin{minipage}{0.45\textwidth}
+        \raggedright
+        \includesvg[height=3.2cm]{Logo_UNAM.svg}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \raggedleft
+        \includesvg[height=3.2cm]{Logo_FC.svg}
+    \end{minipage}
+    
+    \vspace{0.8cm}
+    
+    % Títulos Institucionales
+    {\scshape\Large\textbf{Universidad Nacional Autónoma de México}\par}
+    \vspace{0.3cm}
+    {\scshape\large\textbf{Facultad de Ciencias}\par}
+    \vspace{0.3cm}
+    {\scshape\large\textbf{Ciencias de la Computación}\par}
+    
+    \vspace{0.4cm}
+    \rule{\linewidth}{1.5pt}
+    \vspace{1.0cm}
+    
+    % Nombre del Trabajo
+    {\huge\bfseries Práctica 3: \\ Analizador sintáctico descendente recursivo\par}
+    
+    \vspace{1.2cm}
+    
+    % Información de la Asignatura y Semestre
+    {\Large \textbf{Compiladores} \par}
+    \vspace{0.2cm}
+    {\large Semestre 2027-1 \par}
+    
+    \vspace{1.5cm}
+    
+    % Sección de Datos (Integrantes y Profesores)
+    \begin{center}
+        \begin{tabular}{ll}
+            \textbf{Equipo:} & DFGR \\[0.3cm]
+            \textbf{Integrantes:} & Flores Galeana Daniela - 321162342 \\
+                                & Rivera Machuca Gabriel Eduardo - 321057608 \\[0.5cm]
+            \textbf{Profesora:} & L. en C.C. Yessica Janeth Pablo Martínez \\
+            \textbf{Ayudante:} & Pedro Yamil Salazar González \\
+        \end{tabular}
+    \end{center}
+    
+    \vfill
+    
+    % Fecha
+    {\large\textbf{Fecha de entrega:} 21 de septiembre de 2026 \par}
+    
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+% --- OBJETIVO ---
+\section{Objetivo}
+El objetivo principal de esta tercera práctica fue implementar un analizador sintáctico descendente recursivo para el lenguaje MiniC. Este componente recibe la secuencia de fichas (tokens) producida por el analizador léxico y determina si un programa se encuentra organizado de acuerdo con las reglas de la gramática libre de contexto establecida. Su papel principal en esta etapa es actuar como un filtro de validación estructural entre el lexer y la futura construcción del Árbol de Sintaxis Abstracta (AST) que se abordará en la siguiente práctica, respondiendo únicamente a la pregunta: ¿El programa está sintácticamente bien escrito?
+
+% --- EVOLUCIÓN RESPECTO DE LA PRÁCTICA 2 ---
+\section{Evolución respecto de la Práctica 2}
+
+\subsection{Módulos modificados y agregados}
+Se mantuvo la modularidad del compilador incorporando un nuevo módulo dedicado al análisis sintáctico (\texttt{src/parser/parser.c} y \texttt{include/parser/parser.h}), el cual interactúa estrechamente con los módulos existentes del lexer y los tokens.
+
+\subsection{Interfaz incremental incorporada al lexer}
+Se transformó el analizador léxico de un escaneo masivo con impresión directa a una interfaz incremental bajo demanda mediante la función \texttt{lexer\_next\_token(Lexer *lexer, Token *out)}. Esto permite que el parser solicite fichas de manera individual conforme las necesita para su análisis descendente.
+
+\subsection{Eliminación de la impresión de tokens}
+Se eliminó por completo la impresión en consola de los tokens individuales generada por el lexer durante la ejecución normal. La salida estándar (\texttt{stdout}) quedó reservada exclusivamente para el mensaje global de éxito o los errores de uso, cumpliendo estrictamente con el flujo del compilador.
+
+\subsection{Refactorizaciones y funcionalidades conservadas}
+Se refactorizó la inicialización del lexer (\texttt{lexer\_init}) para unificar los códigos de retorno estándar de éxito y error. Asimismo, se conservaron intactas todas las funcionalidades logradas en la Práctica 2: la gestión de memoria dinámica para lexemas, el seguimiento preciso de líneas y columnas, el reconocimiento de palabras reservadas, literales, operadores compuestos y el manejo de comentarios y errores léxicos.
+
+% --- ARQUITECTURA E INTERFAZ ---
+\section{Arquitectura e interfaz}
+
+\subsection{Organización del módulo \texttt{parser}}
+El módulo se encarga de gestionar el estado del análisis sintáctico mediante la estructura \texttt{Parser}, la cual almacena un puntero al analizador léxico activo, el token actual de anticipación (\texttt{current}), el token previamente consumido (\texttt{previus}), y banderas de control de errores (\texttt{had\_error} y \texttt{panic\_mode}).
+
+\subsection{Responsabilidades y flujo}
+\begin{itemize}
+    \item \textbf{Lexer:} Extrae caracteres del archivo fuente y los agrupa en tokens incrementales.
+    \item \textbf{Parser:} Consume dichos tokens aplicando las reglas gramaticales mediante descenso recursivo, detecta desviaciones y coordina la recuperación ante errores.
+    \item \textbf{\texttt{main.c}:} Coordina la apertura del archivo, la inicialización escalonada del lexer y del parser, ejecuta la validación global y libera los recursos del sistema devolviendo el código de salida adecuado.
+\end{itemize}
+
+\subsection{Administración de memoria y manejo de errores léxicos}
+La propiedad de cada token y su respectivo lexema dinámico es gestionada de forma estricta: el parser destruye el token actual e histórico mediante \texttt{token\_destroy} al avanzar en la lectura. Si el lexer detecta un caracter inválido y emite un token de tipo \texttt{ERROR}, el parser lo intercepta en la función de avance, reporta el diagnóstico léxico a \texttt{stderr} de manera única y continúa sin interrumpir abruptamente el análisis sintáctico.
+
+% --- DESCENSO RECURSIVO Y GRAMÁTICA ---
+\section{Descenso recursivo y gramática}
+El parser fue implementado utilizando la técnica de descenso recursivo, donde cada símbolo no terminal de la gramática EBNF de MiniC cuenta con una función homónima. Mediante el uso de un token de anticipación (\textit{lookahead}), el método \texttt{parse\_statement} inspecciona el tipo de la ficha actual y selecciona la producción adecuada mediante una estructura condicional:
+\begin{itemize}
+    \item \textbf{Declaraciones (\texttt{parse\_declaration}):} Reconocen tipos (\texttt{int} o \texttt{bool}), identificadores, una asignación opcional y finalizan obligatoriamente con punto y coma (\texttt{;}).
+    \item \textbf{Asignaciones (\texttt{parse\_assigment}):} Procesan el identificador, el operador \texttt{=}, una expresión y el punto y coma final.
+    \item \textbf{Impresión (\texttt{parse\_print}):} Validan la palabra clave \texttt{print}, paréntesis, una expresión interna y el cierre con \texttt{;}.
+    \item \textbf{Condicionales y Ciclos (\texttt{parse\_if} / \texttt{parse\_while}):} Reconocen la estructura de control, la condición booleana entre paréntesis y la sentencia asociada, manejando opcionalmente la rama \texttt{else} del condicional más cercano.
+    \item \textbf{Bloques (\texttt{parse\_block}):} Agrupan múltiples sentencias delimitadas por llaves (\texttt{\{} y \texttt{\}}).
+\end{itemize}
+
+% --- EXPRESIONES ---
+\section{Expresiones}
+Para respetar rigurosamente la precedencia y asociatividad de los operadores descritas en el lenguaje MiniC, la gramática de expresiones se estructuró en una jerarquía estricta de funciones donde cada nivel delega en el operador de mayor prioridad:
+\begin{enumerate}
+    \item \texttt{parse\_expression()} $\to$ llamadas a \texttt{parse\_or()} (\texttt{||})
+    \item \texttt{parse\_and()} (\&\&)
+    \item \texttt{parse\_equal()} (\texttt{==}, \texttt{!=})
+    \item \texttt{parse\_comparison()} (\texttt{<}, \texttt{<=}, \texttt{>}, \texttt{>=})
+    \item \texttt{parse\_add()} (\texttt{+}, \texttt{-})
+    \item \texttt{parse\_multiplicative()} (\texttt{*}, \texttt{/})
+    \item \texttt{parse\_unary()} (Operador unario negativo \texttt{-} con asociatividad a la derecha mediante recursividad)
+    \item \texttt{parse\_primary()} (Literales enteros, booleanos, identificadores o expresiones agrupadas entre paréntesis).
+\end{enumerate}
+
+% --- DIAGNÓSTICOS Y RECUPERACIÓN ---
+\section{Diagnósticos y recuperación}
+Cuando el token actual no coincide con lo esperado por la gramática, se invoca a \texttt{syntax\_error}, imprimiendo un mensaje estricto en \texttt{stderr} con el formato:
+\begin{center}
+    \texttt{Error sintactico [linea:columna]: se esperaba <elemento>, pero se encontro '<lexema>'.}
+\end{center}
+Para evitar la parálisis total del compilador ante el primer fallo, se implementó una estrategia de sincronización en modo pánico (\textit{panic mode}) mediante la función \texttt{synchronize()}. Al activarse un error, el parser descarta tokens de manera controlada hasta encontrar un punto y coma (\texttt{;}) o palabras reservadas que inician una nueva sentencia (\texttt{int}, \texttt{bool}, \texttt{if}, \texttt{while}, \texttt{print}, \texttt{,}, llaves), garantizando que no existan ciclos infinitos y permitiendo detectar múltiples errores independientes a lo largo del archivo. Al finalizar el análisis de las sentencias, se verifica obligatoriamente la presencia de \texttt{TOKEN\_EOF} para asegurar el consumo total del archivo fuente.
+
+% --- RESULTADOS Y PRUEBAS ---
+\section{Resultados y pruebas}
+El sistema fue evaluado utilizando la batería completa de pruebas públicas proporcionadas para la Práctica 3, las cuales validan tanto programas correctos (\texttt{p01} a \texttt{p08}) como casos inválidos con errores sintácticos, léxicos y múltiples fallos simultáneos (\texttt{p09} a \texttt{p17}). El ejecutable \texttt{minic} responde con los códigos de salida apropiados (\texttt{0} para éxito y \texttt{1} para errores detectados) y emite los diagnósticos exclusivamente por el flujo de errores estándar. Además se implementaron pruebas privadas en la carpeta \texttt{tests/equipo/inputs} en las cuales se prueban casos como códigos sintacticamente correctos y otros casos con errores o con símbolos inexistentes en la grámatica como \texttt{@} lo cual genera errores los cuales son los esperados; sin embargo se encontro un problema con una secuencia \texttt{if, else} la cuál se describe en la siguiente sección.
+
+% --- PROBLEMAS ENCONTRADOS ---
+\section{Problemas encontrados}
+Durante el desarrollo de la sincronización en modo pánico, experimentamos bloqueos y bucles infinitos en pruebas con contenido sobrante o errores múltiples debido a retornos prematuros evaluados con el token previo. Tras analizar el flujo de avance del lookahead, rediseñamos la función \texttt{synchronize} para asegurar el consumo seguro de los puntos y coma y la detención oportuna en las fronteras de las sentencias.\\
+Se encontro un error con if else al hacer las pruebas, el error consta en que si se recibe por ejemplo \texttt{if(x==0) print(1) else print(2)} aunque se debería leer como correcto el parser no lo entiende como que el else pertenece al if, si no que toma el else como un elemento aislado que le falta un if y queda en un bucle infinito, se detecto el error, sin embargo se nos acabo el tiempo para corregirlo.
+
+% --- DIVISIÓN DEL TRABAJO ---
+\section{División del trabajo}
+El desarrollo de la práctica se realizó de manera colaborativa:
+\begin{itemize}
+    \item \textbf{Gabriel Eduardo Rivera Machuca:} Diseño de la interfaz incremental del lexer, implementación de la jerarquía de expresiones con precedencia en el parser y adaptación del flujo principal en \texttt{main.c}.
+    \item \textbf{Daniela Flores Galeana:} Implementación de las funciones de sentencias de control (\texttt{if}, \texttt{while}, bloques), pruebas unitarias locales y estructuración del mecanismo de recuperación ante errores sintácticos.
+\end{itemize}
+Ambos integrantes revisaron conjuntamente la arquitectura del código y comprenden la totalidad de la implementación.
+
+% --- USO DE HERRAMIENTAS DE INTELIGENCIA ARTIFICIAL ---
+\section{Uso de herramientas de Inteligencia Artificial}
+Para esta práctica se utilizó Gemini (Google) como herramienta de apoyo técnico.
+\begin{itemize}
+    \item \textbf{Propósito:} Consultar la teoría de diseño de parsers descendentes recursivos, la estructura del mecanismo de sincronización en modo pánico y la sintaxis avanzada de apuntadores en C.
+    \item \textbf{Consultas realizadas:} Dudas sobre la gestión del ciclo iterativo en \texttt{parser\_advance} para ignorar tokens léxicos de error sin propagar fallos sintácticos redundantes.
+    \item \textbf{Apoyo en el reporte:} Organización de secciones y redacción formal orientada a los criterios de la rúbrica institucional.
+    \item \textbf{Revisión y comprobación:} Todo el código generado o consultado fue probado, depurado e integrado de manera manual, verificando su éxito con el script de pruebas.
+\end{itemize}
+
+% --- CONCLUSIONES ---
+\section{Conclusiones}
+La implementación del analizador sintáctico permitió comprender la importancia de transformar un flujo lineal de fichas en una estructura jerárquica coherente. El dominio del descenso recursivo y el manejo adecuado del token de anticipación sientan las bases conceptuales necesarias para la siguiente etapa del compilador, donde estas mismas funciones de reconocimiento serán extendidas para construir de manera limpia y eficiente los nodos del Árbol de Sintaxis Abstracta (AST).
+
+% --- REFERENCIAS ---
+\section{Referencias}
+\begin{itemize}
+    \item Aho, A. V., Lam, M. S., Sethi, R., \& Ullman, J. D. (2006). \textit{Compilers: Principles, techniques, and tools} (2da ed.). Pearson.
+    
+    \item Fischer, C. N., Cytron, R. K., \& LeBlanc, R. J. (2009). \textit{Crafting a compiler}. Pearson.
+    
+    \item GeeksforGeeks. (s.f.). \textit{Dynamic memory allocation in C using malloc(), calloc(), free() and realloc()}. \url{https://www.geeksforgeeks.org/dynamic-memory-allocation-in-c-using-malloc-calloc-free-and-realloc/}
+    
+    \item GeeksforGeeks. (s.f.). \textit{Introduction of lexical analysis}. \url{https://www.geeksforgeeks.org/compiler-design/introduction-of-lexical-analysis/}
+    
+    \item International Organization for Standardization. (2018). \textit{Information technology — Programming languages — C} (ISO/IEC 9899:2018).
+    
+    \item Kernighan, B. W., \& Ritchie, D. M. (1988). \textit{The C programming language} (2da ed.). Prentice Hall.
+    
+    \item Pablo Martínez, Y. J. (2026). \textit{Compiladores\_Practica2.pdf y GUIA\_INTEGRACION\_P2.md} [Material de clase]. Facultad de Ciencias, Universidad Nacional Autónoma de México.
+    
+    \item Valgrind Developers. (s.f.). \textit{Valgrind user manual}. \url{https://valgrind.org/docs/manual/manual.html}
+\end{itemize}
+\end{document}

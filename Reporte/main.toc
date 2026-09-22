@@ -1,0 +1,20 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {section}{\numberline {1}Objetivo}{2}{section.1}%
+\contentsline {section}{\numberline {2}Evolución respecto de la Práctica 2}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Módulos modificados y agregados}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Interfaz incremental incorporada al lexer}{2}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Eliminación de la impresión de tokens}{2}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Refactorizaciones y funcionalidades conservadas}{2}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Arquitectura e interfaz}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Organización del módulo \texttt {parser}}{3}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Responsabilidades y flujo}{3}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Administración de memoria y manejo de errores léxicos}{3}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Descenso recursivo y gramática}{3}{section.4}%
+\contentsline {section}{\numberline {5}Expresiones}{4}{section.5}%
+\contentsline {section}{\numberline {6}Diagnósticos y recuperación}{4}{section.6}%
+\contentsline {section}{\numberline {7}Resultados y pruebas}{5}{section.7}%
+\contentsline {section}{\numberline {8}Problemas encontrados}{5}{section.8}%
+\contentsline {section}{\numberline {9}División del trabajo}{5}{section.9}%
+\contentsline {section}{\numberline {10}Uso de herramientas de Inteligencia Artificial}{5}{section.10}%
+\contentsline {section}{\numberline {11}Conclusiones}{6}{section.11}%
+\contentsline {section}{\numberline {12}Referencias}{6}{section.12}%

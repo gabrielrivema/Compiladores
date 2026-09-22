@@ -9,4 +9,3 @@ while (base != limite) {
     if (base > 50000) {
         print(base);
     }
-}

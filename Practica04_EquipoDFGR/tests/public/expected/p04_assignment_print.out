@@ -1,0 +1,8 @@
+AST:
+Program
+  VariableDeclaration(int, x)
+  Assignment(x)
+    Integer(5)
+  Print
+    Identifier(x)
+Programa sintacticamente correcto.

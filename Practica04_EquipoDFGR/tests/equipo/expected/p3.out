@@ -1,0 +1,2 @@
+Error sintactico [4:0]: se esperaba ';', pero se encontro '{'.
+Error sintactico [7:23]: se esperaba ')', pero se encontro '{'.

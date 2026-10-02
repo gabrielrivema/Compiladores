@@ -1,0 +1,7 @@
+AST:
+Program
+  VariableDeclaration(int, contador)
+    Integer(10)
+  VariableDeclaration(bool, activo)
+    Boolean(true)
+Programa sintacticamente correcto.

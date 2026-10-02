@@ -1,0 +1,16 @@
+AST:
+Program
+  VariableDeclaration(bool, activo)
+    Boolean(true)
+  If
+    Condition
+      Identifier(activo)
+    Then
+      Block
+        Print
+          Integer(1)
+    Else
+      Block
+        Print
+          Integer(0)
+Programa sintacticamente correcto.

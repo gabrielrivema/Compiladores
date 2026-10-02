@@ -1,0 +1,5 @@
+AST:
+Program
+  VariableDeclaration(int, x)
+  VariableDeclaration(bool, activo)
+Programa sintacticamente correcto.

@@ -1,0 +1,8 @@
+AST:
+Program
+  Block
+    VariableDeclaration(int, x)
+    Block
+      Assignment(x)
+        Integer(1)
+Programa sintacticamente correcto.

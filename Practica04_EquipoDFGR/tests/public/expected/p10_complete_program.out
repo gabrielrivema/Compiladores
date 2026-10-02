@@ -1,0 +1,24 @@
+AST:
+Program
+  VariableDeclaration(int, contador)
+    Integer(3)
+  VariableDeclaration(bool, activo)
+    Boolean(true)
+  While
+    Condition
+      And
+        Greater
+          Identifier(contador)
+          Integer(0)
+        Identifier(activo)
+    Body
+      Block
+        Print
+          Identifier(contador)
+        Assignment(contador)
+          Subtract
+            Identifier(contador)
+            Integer(1)
+  Assignment(activo)
+    Boolean(false)
+Programa sintacticamente correcto.

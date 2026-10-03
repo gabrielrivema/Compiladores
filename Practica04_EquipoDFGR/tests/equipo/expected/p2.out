@@ -1,1 +1,40 @@
+AST:
+Program
+  VariableDeclaration(int, a)
+    Integer(15)
+  VariableDeclaration(int, b)
+    Integer(30)
+  VariableDeclaration(bool, bandera)
+    Boolean(false)
+  If
+    Condition
+      And
+        Less
+          Identifier(a)
+          Identifier(b)
+        NotEqual
+          Identifier(bandera)
+          Boolean(false)
+    Then
+      Block
+        While
+          Condition
+            LessEqual
+              Identifier(a)
+              Integer(20)
+          Body
+            Block
+              Assignment(a)
+                Add
+                  Identifier(a)
+                  Integer(1)
+              Print
+                Identifier(a)
+    Else
+      Block
+        Assignment(bandera)
+          Boolean(true)
+        Print
+          Identifier(b)
 Programa sintacticamente correcto.
+

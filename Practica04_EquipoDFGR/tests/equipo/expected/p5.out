@@ -1,8 +1,3 @@
 Error lexico [6:14]: caracter invalido '$'.
 Error sintactico [6:16]: se esperaba ';', pero se encontro '2'.
-Error lexico [7:6]: caracter invalido '"'.
-Error sintactico [7:15]: se esperaba ')', pero se encontro 'de'.
-Error sintactico [7:18]: se esperaba '=', pero se encontro 'prueba'.
-Error lexico [7:24]: caracter invalido '"'.
-Error lexico [8:9]: caracter invalido '#'.
-Error lexico [9:11]: caracter invalido '@'.
+Error sintactico [7:0]: se esperaba Fin del archivo, pero se encontro 'print'.

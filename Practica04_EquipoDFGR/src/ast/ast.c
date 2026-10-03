@@ -361,7 +361,7 @@ void ast_destroy(ASTNode *node) {
             ast_node_list_destroy(&node->data.program.statements);
             break;
         case AST_BLOCK:
-            ast_node_list_destroy(&node->data.program.statements);
+            ast_node_list_destroy(&node->data.block.statements);
             break;
         case AST_VARIABLE_DECLARATION:
             free(node->data.variable_declaration.name);

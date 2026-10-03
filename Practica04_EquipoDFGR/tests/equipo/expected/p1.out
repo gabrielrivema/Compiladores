@@ -1,8 +1,3 @@
 Error sintactico [10:13]: se esperaba ')', pero se encontro '='.
-Error lexico [13:12]: caracter invalido '%'.
-Error sintactico [13:13]: se esperaba ')', pero se encontro '10'.
-Error lexico [14:14]: caracter invalido '"'.
-Error sintactico [14:18]: se esperaba ')', pero se encontro 'numero'.
-Error sintactico [14:25]: se esperaba '=', pero se encontro 'es'.
-Error sintactico [14:37]: se esperaba '=', pero se encontro 'de'.
-Error lexico [14:42]: caracter invalido '"'.
+Error sintactico [10:16]: se esperaba '}', pero se encontro '{'.
+Error sintactico [10:16]: se esperaba Fin del archivo, pero se encontro '{'.

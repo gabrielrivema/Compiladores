@@ -1,20 +1,23 @@
-# Práctica 3 — Analizador sintáctico descendente recursivo
+# Práctica 4 — Árbol de Sintaxis Abstracta (AST) para MiniC
 
 ## Información general
 
 | Asignatura | Compiladores |
-| Número de práctica | 3 |
+| :--- | :--- |
+| Número de práctica | 4 |
 | Equipo | DFGR |
 
 ## Integrantes
 
-| Flores Galeana Daniela | [321162342] | [danielafg@ciencias.unam.mx] |
-| Rivera Machuca Gabriel Eduardo | [321057608] | [gabrielrivema@ciencias.unam.mx] |
+| Nombre | Número de Cuenta | Correo Electrónico |
+| :--- | :--- | :--- |
+| Flores Galeana Daniela | [321162342] | danielafg@ciencias.unam.mx |
+| Rivera Machuca Gabriel Eduardo | [321057608] | gabrielrivema@ciencias.unam.mx |
 
 ## Estructura del proyecto
 
 ```text
-Practica03_EquipoDFGR/
+Practica04_EquipoDFGR/
 ├── README.md
 ├── CHANGELOG.md
 ├── Reporte.pdf
@@ -25,6 +28,8 @@ Practica03_EquipoDFGR/
 │   │   └── token.c
 │   ├── parser/
 │   │   └── parser.c
+│   ├── ast/
+│   │   └── ast.c
 │   └── main.c
 ├── include/
 │   ├── lexer/
@@ -32,6 +37,8 @@ Practica03_EquipoDFGR/
 │   │   └── token.h
 │   ├── parser/
 │   │   └── parser.h
+│   └── ast/
+│       └── ast.h
 └── tests/
     ├── public/
     │   ├── expected/
@@ -42,16 +49,18 @@ Practica03_EquipoDFGR/
 ```
 
 ### Módulos implementados
-
-| `src/main.c` | Punto de entrada, validación de E/S, solicitud secuencial de tokens y formateo de impresión. |
+|Modulo | Descripción |
+|:-----|:------
+| `src/main.c` | Punto de entrada, inicia el flujo, invoca al parser e imprime el AST, finalmente libera los recursos del sistema. |
 | `src/lexer/lexer.c` e `include/lexer/lexer.h` | Lógica del autómata, lectura de caracteres del archivo, seguimiento preciso de línea/columna e ignorado de espacios en blanco. |
 | `src/lexer/token.c` e `include/lexer/token.h` | Definición de las categorías léxicas , creación de la estructura del token, manejo de memoria dinámica de los lexemas y su posterior liberación. |
+| `src/parser/parser.c` e `include/parser/parser.h` | Consume los tokens generados por lexeme mediante descenso recursivo, además válida a grámatica, construir los nodos del AST y aplicar recuperación de errores. |
+| `src/ast/ast.c` e `include/ast/ast.h` | Define la estrucura del AST, gestiona listas, imprime el AST y libera la memoria de manera recursiva. |
 
 ## Requisitos
 
 - GCC con soporte para C11
 - GNU Make
-- Dependencias adicionales: ninguna
 
 ## Compilación
 
@@ -73,21 +82,23 @@ make clean
 
 ## Funcionalidades implementadas
 
-- [x] El lexer entrega tokens incrementalmente y sin imprimirlos.
-- [x] El parser no inspecciona directamente caracteres del archivo.
-- [x] Cada token y lexema tiene un propietario documentado.
-- [x] Existe al menos un token de anticipación.
-- [x] Las funciones del parser corresponden a responsabilidades separadas.
-- [x] Se reconocen todas las sentencias publicadas.
-- [x] Las expresiones respetan precedencia y asociatividad.
-- [x] Un token `ERROR` no genera además un diagnóstico sintáctico por sí mismo.
-- [x] La recuperación no entra en ciclos ni repite indefinidamente un error.
-- [x] Se consume la entrada completa hasta `TOKEN_EOF`.
-- [x] Sólo los programas válidos imprimen el mensaje de éxito.
-- [x] Los diagnósticos se escriben en `stderr`.
-- [x] Los códigos de salida distinguen éxito de programa inválido.
-- [x] Se liberan tokens, lexemas y estados aun cuando haya errores.
-- [x] El proyecto no construye AST ni realiza validaciones semánticas.
+
+- [x] El lexer continúa produciendo tokens sin imprimirlos.
+- [x] El parser conserva sus diagnósticos y recuperación de P03.
+- [x] Cada función principal del parser devuelve el nodo correspondiente.
+- [x] Los lexemas necesarios se copian antes de liberar o reemplazar tokens.
+- [x] Las listas crecen dinámicamente y no imponen un límite fijo pequeño.
+- [x] La precedencia y asociatividad quedan reflejadas en la estructura.
+- [x] Cada nodo conserva la línea y columna indicadas en el enunciado.
+- [x] Los constructores documentan cuándo adquieren la propiedad de sus hijos.
+- [x] Un fallo de construcción libera únicamente los recursos todavía poseídos.
+- [x] La salida coincide exactamente con el formato canónico.
+- [x] Un programa inválido deja `stdout` vacío.
+- [x] `ast_destroy(NULL)` es seguro.
+- [x] Liberar la raíz libera el árbol completo.
+- [x] No se realizan todavía validaciones semánticas.
+
+
 
 
 ## Pruebas
@@ -99,19 +110,8 @@ Las pruebas están divididas en `tests/public/` y `tests/equipo/`. Los casos pro
 
 Para ejecutar las pruebas, se debe correr el binario contra los archivos de entrada (`.mc`) y comparar la salida estándar con el contenido de los archivos de salida esperada (`.out`), que están en las carpetas `expected/`.
 
+### Ejecución de las pruebas
 
-
-## Lista de comprobación
-
-- [x] Las pruebas de la Práctica 1 continúan aprobándose.
-- [x] Los identificadores utilizan máxima coincidencia.
-- [x] Las palabras reservadas se clasifican después de reconocer el lexema.
-- [x] Los operadores compuestos se reconocen antes que los simples.
-- [x] `!`, `&` y `|` aislados producen `ERROR`.
-- [x] `/` y `//` se distinguen correctamente.
-- [x] Los comentarios no producen tokens.
-- [x] Los errores no detienen el análisis.
-- [x] Línea y columna se conservan correctamente.
-- [x] Se produce exactamente un `TOKEN_EOF`.
-- [x] La salida estándar coincide exactamente con el formato publicado.
-- [x] El proyecto compila con las opciones mínimas exigidas.
+```text
+make test_eq
+```

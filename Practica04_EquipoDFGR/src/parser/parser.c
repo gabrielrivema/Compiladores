@@ -1,6 +1,8 @@
+#define _POSIX_C_SOURCE 200809L
 #include "parser/parser.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 
 /**
@@ -144,7 +146,9 @@ ASTNode *parse_declaration(Parser *parser){
         return NULL;
     }
     
-    Token id_token = parser->current;
+    char *name = strdup(parser->current.lexeme);
+    int line = parser->current.line;
+    int column = parser->current.column;
     parser_advance(parser);
 
     ASTDeclaredType declared = (type_token == INT) ? AST_TYPE_INT : AST_TYPE_BOOL;
@@ -152,16 +156,20 @@ ASTNode *parse_declaration(Parser *parser){
 
     if(parser_match(parser, ASSIGN)){
         initializer = parse_expression(parser);
-        if(initializer == NULL) return NULL;
+        if(initializer == NULL){
+            free(name);
+            return NULL;
+        }
     }
 
     consume(parser, SEMICOLON, "';'");
     if(parser->had_error && parser->panic_mode){
+        free(name);
         ast_destroy(initializer);
         return NULL;
     }
 
-    return ast_create_variable_declaration(declared, id_token.lexeme, initializer, id_token.line, id_token.column);
+    return ast_create_variable_declaration(declared, name, initializer, line, column);
     
     }
 
@@ -169,22 +177,28 @@ ASTNode *parse_declaration(Parser *parser){
  * Consume IDENTIFIER
  */
 ASTNode *parse_assigment(Parser *parser){
-    Token id_token = parser->current;
+    char *name = strdup(parser->current.lexeme);
+    int line = parser->current.line;
+    int column = parser->current.column;
     parser_advance(parser);
 
     consume(parser, ASSIGN, "'='");
     
     ASTNode *value = parse_expression(parser);
-    if(value == NULL) return NULL;
+    if(value == NULL){
+        free(name);
+        return NULL;
+    }
 
     consume(parser, SEMICOLON, "';'");
 
     if(parser->had_error && parser->panic_mode){
+        free(name);
         ast_destroy(value);
         return NULL;
     }
 
-    return ast_create_assignment(id_token.lexeme, value, id_token.line, id_token.column);
+    return ast_create_assignment(name, value, line, column);
 }
 
 
@@ -329,18 +343,17 @@ ASTNode *parse_statement(Parser *parser){
 }
 
 ASTNode *parse_primary(Parser *parser){
-    if(parser_match(parser, INTEGER)){
+    if(parser_match(parser, INTEGER))
         return ast_create_integer(parser->previus.lexeme, parser->previus.line, parser->previus.column);
-    }
-    if(parser_match(parser, TRUE)){
+
+    if(parser_match(parser, TRUE))
         return ast_create_boolean(1, parser->previus.line, parser->previus.column);
-    }
-    if(parser_match(parser, FALSE)){
+
+    if(parser_match(parser, FALSE))
         return ast_create_boolean(0, parser->previus.line, parser->previus.column);
-    }
-    if(parser_match(parser, IDENTIFIER)){
-        return ast_create_identifier(parser->previus.lexeme, parser->previus.line, parser->previus.column);
-    }
+    
+    if(parser_match(parser, IDENTIFIER))
+        return ast_create_identifier(parser->previus.lexeme, parser->previus.line, parser->previus.column);    
     
     if(parser_match(parser, LPAREN)){
         ASTNode *expr = parse_expression(parser);

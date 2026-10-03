@@ -2,6 +2,25 @@
 
 Bitácora de los cambios que se fueron haciendo al analizador léxico de MiniC.
 
+## [Práctica 4] - 2026-10-02
+
+### Añadido
+- **Módulo del Árbol de Sintaxis Abstracta (`ast.c` / `ast.h`):**
+  - Se definieron los tipos de nodos del AST (`ASTNodeType`), abarcando programas, bloques, declaraciones de variables, asignaciones, sentencias `print`, condicionales `if`-`else`, ciclos `while`, expresiones binarias y unarias, identificadores y literales (enteros y booleanos).
+  - Se implementaron enumeraciones para operadores binarios (`BinaryOperator`) y unarios (`UnaryOperator`) para una clasificación limpia y robusta.
+  - Se diseñó y desarrolló una **lista dinámica de nodos** (`ASTNodeList`) con funciones de inicialización, crecimiento automático mediante `realloc`, inserción y destrucción recursiva.
+  - Se implementaron **funciones constructoras** para cada tipo de nodo, encargadas de reservar memoria, validar el éxito de la asignación, copiar cadenas de forma segura mediante `strdup` (conforme al estándar POSIX/C11) y conservar la información de línea y columna.
+  - Se desarrolló la función de **impresión canónica** (`ast_print`), que recorre recursivamente el árbol aplicando un formato determinista con dos espacios de indentación por nivel jerárquico.
+  - Se implementó la **destrucción recursiva segura** (`ast_destroy`), asegurando la liberación completa de cadenas, listas internas, nodos hijos y nodos raíz sin dejar fugas de memoria.
+
+### Modificado
+- **Analizador Sintáctico (`parser.c` / `parser.h`):**
+  - Se transformaron todas las funciones de reconocimiento gramatical y de expresiones (que antes retornaban `void`) para que **construyan y devuelvan nodos del AST (`ASTNode *`)**.
+  - Se integró el contrato de transferencia de propiedad de memoria: si un constructor falla o retorna `NULL`, el parser se encarga de liberar los subárboles parciales para evitar fugas.
+  - Se preservó íntegramente la estrategia de recuperación de errores en modo pánico (*panic mode*) y los diagnósticos estandarizados desarrollados en la Práctica 3.
+- **Controlador Principal (`main.c`):**
+  - Se actualizó el flujo de ejecución para invocar `parse_program`, verificar el éxito de la compilación, imprimir el AST canónico con `ast_print` únicamente en programas válidos y liberar la memoria raíz con `ast_destroy`.
+
 ## [Práctica 3] - 2026-09-21
 
 ### Añadido

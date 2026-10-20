@@ -1,0 +1,3 @@
+Error sintactico [10:13]: se esperaba ')', pero se encontro '='.
+Error sintactico [10:16]: se esperaba '}', pero se encontro '{'.
+Error sintactico [10:16]: se esperaba Fin del archivo, pero se encontro '{'.

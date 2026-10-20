@@ -1,0 +1,132 @@
+# Changelog
+
+Bitácora de los cambios que se fueron haciendo al compilador de MiniC.
+
+## [Práctica 5] - 2026-10-23
+
+### Añadido
+- **Módulo de Símbolos (`src/semantic/symbol.c` / `include/semantic/symbol.h`):**
+  - Se implementó la estructura `Symbol` para representar variables declaradas, almacenando un nombre con copia propia (`strdup`), tipo declarado (`Type`: `TYPE_INT`, `TYPE_BOOL`, `TYPE_ERROR`, `TYPE_UNKNOWN`), nivel de ámbito (`scope_level`), línea, columna y una referencia prestada al nodo de declaración del AST.
+  - Se desarrollaron las funciones constructoras y destructoras (`symbol_create` y `symbol_destroy`), garantizando la gestión segura de memoria sin liberar los nodos del AST.
+
+- **Módulo de Ámbitos (`src/semantic/scope.c` / `include/semantic/scope.h`):**
+  - Se diseñó la estructura `Scope` basada en un arreglo dinámico de símbolos con redimensionamiento automático (`realloc`), nivel jerárquico, un enlace al ámbito padre (`parent`) para la cadena de visibilidad, y un puntero de registro de propiedad (`next_owned`).
+  - Se implementaron las funciones `scope_create` y `scope_destroy` para la creación y liberación limpia de ámbitos locales y sus símbolos poseídos.
+
+- **Tabla de Símbolos (`src/semantic/symbol_table.c` / `include/semantic/symbol_table.h`):**
+  - Se implementó la estructura `SymbolTable` para administrar la pila de ámbitos anidados (`current_scope` y la lista global de ámbitos poseídos `owned_scopes`).
+  - Se desarrollaron operaciones robustas: `symbol_table_init` (creación del ámbito global), `symbol_table_enter_scope` (creación de ámbitos hijos), `symbol_table_exit_scope` (retorno al ámbito padre protegiendo el ámbito global), búsqueda local (`symbol_table_lookup_current`), búsqueda visible a través de ámbitos padres (`symbol_table_lookup`), inserción local con validación de duplicados (`symbol_table_insert`), y destrucción total (`symbol_table_destroy`).
+
+- **Analizador Semántico (`src/semantic/semantic.c` / `include/semantic/semantic.h`):**
+  - Se creó el módulo `SemanticAnalyzer` encargado de recorrer el AST de forma recursiva mediante visitantes especializados por tipo de nodo (`visit_program`, `visit_block`, `visit_variable_declaration`, `visit_assignment`, `visit_print_statement`, `visit_if_statement`, `visit_while_statement`, `visit_expression`).
+  - Se implementó la validación semántica para:
+    - Detectar redeclaraciones dentro del mismo ámbito (emitiendo error con posición de la declaración previa).
+    - Verificar el uso de variables asegurando que hayan sido declaradas previamente (búsqueda visible).
+    - Gestionar la creación y destrucción de ámbitos en bloques, estructuras condicionales `if`-`else` y ciclos `while`.
+    - Permitir correctamente el *shadowing* entre ámbitos anidados.
+    - Acumular múltiples errores semánticos enviándolos a `stderr` con formato estándar, dejando `stdout` vacío y asegurando la recuperación cuando sea posible.
+
+### Modificado
+- **Controlador Principal (`src/main.c`):**
+  - Se actualizó el flujo de ejecución para invocar el análisis semántico únicamente cuando el archivo supera el análisis léxico y sintáctico sin errores.
+  - Se configuró la salida estándar para emitir exactamente `Programa semanticamente correcto.` seguido de un salto de línea con código de salida `0` en caso de éxito, o bien emitir diagnósticos a `stderr` y finalizar con código distinto de cero ante errores semánticos o fallos internos.
+
+## [Práctica 4] - 2026-10-02
+
+### Añadido
+- **Módulo del Árbol de Sintaxis Abstracta (`ast.c` / `ast.h`):**
+  - Se definieron los tipos de nodos del AST (`ASTNodeType`), abarcando programas, bloques, declaraciones de variables, asignaciones, sentencias `print`, condicionales `if`-`else`, ciclos `while`, expresiones binarias y unarias, identificadores y literales (enteros y booleanos).
+  - Se implementaron enumeraciones para operadores binarios (`BinaryOperator`) y unarios (`UnaryOperator`) para una clasificación limpia y robusta.
+  - Se diseñó y desarrolló una **lista dinámica de nodos** (`ASTNodeList`) con funciones de inicialización, crecimiento automático mediante `realloc`, inserción y destrucción recursiva.
+  - Se implementaron **funciones constructoras** para cada tipo de nodo, encargadas de reservar memoria, validar el éxito de la asignación, copiar cadenas de forma segura mediante `strdup` (conforme al estándar POSIX/C11) y conservar la información de línea y columna.
+  - Se desarrolló la función de **impresión canónica** (`ast_print`), que recorre recursivamente el árbol aplicando un formato determinista con dos espacios de indentación por nivel jerárquico.
+  - Se implementó la **destrucción recursiva segura** (`ast_destroy`), asegurando la liberación completa de cadenas, listas internas, nodos hijos y nodos raíz sin dejar fugas de memoria.
+
+### Modificado
+- **Analizador Sintáctico (`parser.c` / `parser.h`):**
+  - Se transformaron todas las funciones de reconocimiento gramatical y de expresiones (que antes retornaban `void`) para que **construyan y devuelvan nodos del AST (`ASTNode *`)**.
+  - Se integró el contrato de transferencia de propiedad de memoria: si un constructor falla o retorna `NULL`, el parser se encarga de liberar los subárboles parciales para evitar fugas.
+  - Se preservó íntegramente la estrategia de recuperación de errores en modo pánico (*panic mode*) y los diagnósticos estandarizados desarrollados en la Práctica 3.
+- **Controlador Principal (`main.c`):**
+  - Se actualizó el flujo de ejecución para invocar `parse_program`, verificar el éxito de la compilación, imprimir el AST canónico con `ast_print` únicamente en programas válidos y liberar la memoria raíz con `ast_destroy`.
+
+## [Práctica 3] - 2026-09-21
+
+### Añadido
+- **Implementación del Analizador Sintáctico (`parser.c` / `parser.h`):**
+  - Se creó la estructura `Parser`, compuesta por un puntero al `Lexer`, el token actual (`current`), el token previo (`previus`), y banderas de control de errores (`had_error` y `panic_mode`).
+  - **Funciones principales y de gestión de anticipación (*lookahead*):**
+    - `int parser_init(Parser *parser, Lexer *lexer);`: Inicializa el estado del parser, configura las banderas de error y solicita el primer token de anticipación.
+    - `void parser_destroy(Parser *parser);`: Libera adecuadamente los recursos y tokens asociados.
+    - `int parser_advance(Parser *parser);`: Avanza al siguiente token utilizando la interfaz incremental del lexer, manejando de forma transparente y desacoplada la filtración de errores léxicos.
+    - `int parser_check(const Parser *parser, TokenType type);` y `int parser_match(Parser *parser, TokenType type);`: Permiten consultar y consumir condicionalmente los tokens del flujo.
+    - `void consume(Parser *parser, TokenType expected, const char *message);`: Verifica y consume el token esperado o dispara un error sintáctico en caso contrario.
+  - **Manejo de Errores y Recuperación:**
+    - `void syntax_error(Parser *parser, const Token *token, const char *message);`: Reporta errores sintácticos con formato estricto a `stderr` incluyendo línea y columna, evitando cascadas de errores mediante el uso de `panic_mode`.
+    - `void synchronize(Parser *parser);`: Implementa la estrategia de recuperación en modo pánico (*panic mode*) buscando puntos y coma o palabras reservadas de sincronización para reanudar el análisis de forma segura.
+  - **Funciones de la Gramática (Descenso Recursivo):**
+    - `int parse_program(Parser *parser);`: Valida la secuencia completa de sentencias hasta encontrar el final del archivo (`TOKEN_EOF`).
+    - **Sentencias y Estructuras de Control:** `parse_statement`, `parse_declaration`, `parse_assigment`, `parse_print`, `parse_if`, `parse_while` y `parse_block`.
+    - **Expresiones y Precedencia de Operadores:** Se implementó la jerarquía completa respetando asociatividad y precedencia (de menor a mayor prioridad): `parse_expression` (`parse_or`), `parse_and`, `parse_equal`, `parse_comparison`, `parse_add`, `parse_multiplicative`, `parse_unary` y `parse_primary`.
+
+### Modificado
+- **Interfaz del Analizador Léxico (`lexer.h` / `lexer.c`):**
+  - Se adaptó el lexer de un análisis masivo a una interfaz incremental bajo demanda mediante `LexerStatus lexer_next_token(Lexer *lexer, Token *out);`, permitiendo que el parser solicite tokens uno a uno sin imprimirlos en la salida estándar.
+  - Se ajustó el valor de retorno de `lexer_init()` para que devuelva `1` en caso de éxito y `0` ante fallos, esto tras hacer las pruebas proporcionadas y ver que no se daba la salida esperada se ajusto para el estandar del proyecto.
+- **Controlador Principal (`main.c`):**
+  - Se actualizó el flujo de ejecución para inicializar el `Lexer` y el `Parser`, gestionar el análisis sintáctico global y emitir los códigos de salida correspondientes (`0` para éxito con el mensaje `"Programa sintacticamente correcto."`, `1` para errores léxicos/sintácticos y `2` para errores de uso o apertura de archivos).
+
+## [Práctica 2] - 2026-09-12
+
+### Correcciones de la Práctica 1
+
+- **Manejo de memoria:** Se cambió la forma de guardar los lexemas, ya que en la práctica anterior se usaban arreglos de tamaño fijo. Ahora se usa `malloc` y `realloc` para poder aumentar el espacio cuando sea necesario.
+- Se corrigió el problema señalado en el feedback de la práctica anterior relacionado con el uso de memoria.
+
+### Añadido
+
+- **Identificadores y palabras reservadas (`lexer.c` / `token.h`):**
+  - Se agregó el reconocimiento de identificadores. Pueden empezar con una letra o `_` y después tener letras, números o `_`.
+  - Se agregó la función `check_keyword()` para revisar si un identificador es una palabra reservada como `int`, `bool`, `if`, `else`, `while` o `print`, o si es `true` o `false`.
+
+- **Operadores compuestos:**
+  - Se agregó el reconocimiento de `==`, `!=`, `<=`, `>=`, `&&` y `||`.
+  - Se utiliza `ungetc` cuando se lee un carácter que no forma parte del operador, para poder procesarlo después.
+
+- **Comentarios:**
+  - Se agregó el manejo de comentarios de una línea (`//`) y comentarios multilínea (`/* ... */`).
+  - Mientras se leen los comentarios se siguen actualizando las posiciones de línea y columna.
+
+- **Manejo de errores:**
+  - Se agregó el token `ERROR` para caracteres como `!`, `&` y `|` cuando aparecen solos.
+  - Estos casos ya no detienen el análisis léxico y se generan como tokens de error.
+
+### Modificado
+
+- **`TokenType`:** Se agregaron nuevos tipos de token para identificadores, palabras reservadas, booleanos y operadores compuestos:
+  `IDENTIFIER`, `INT`, `BOOL`, `IF`, `ELSE`, `WHILE`, `PRINT`, `TRUE`, `FALSE`, `EQUAL`, `NOT_EQUAL`, `LESS_EQUAL`, `GREATER_EQUAL`, `AND` y `OR`.
+
+---
+
+## [Práctica 1] - 2026-09-05
+
+### Añadido
+
+- **Tokens (`token.h` / `token.c`):**
+  - Se definió el `enum TokenType`.
+  - Se creó la estructura `Token`, que guarda el tipo, lexema, línea y columna.
+
+- **Lexer (`lexer.h` / `lexer.c`):**
+  - Se agregó el seguimiento de la posición dentro del archivo, empezando en línea 1 y columna 0.
+  - Se agregó el manejo de espacios y saltos de línea (`\n`, `\r` y `\r\n`).
+  - Se agregaron los operadores y símbolos simples: `+`, `-`, `*`, `/`, `=`, `<`, `>`, `(`, `)`, `{`, `}`, `;`.
+  - Se agregó el reconocimiento de números enteros.
+  - Se agregó `TOKEN_EOF` para indicar el final del archivo.
+
+- **`main.c`:**
+  - Se agregó el manejo de los argumentos de la línea de comandos.
+  - Se agregó la lectura del archivo y la impresión de los tokens.
+
+- **Infraestructura:**
+  - Se creó un `Makefile` para facilitar la compilación y limpieza del proyecto.
+  - Se agregaron las pruebas del equipo en `tests/equipo/`.

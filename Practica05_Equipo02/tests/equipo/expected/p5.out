@@ -1,0 +1,3 @@
+Error lexico [6:14]: caracter invalido '$'.
+Error sintactico [6:16]: se esperaba ';', pero se encontro '2'.
+Error sintactico [7:0]: se esperaba Fin del archivo, pero se encontro 'print'.

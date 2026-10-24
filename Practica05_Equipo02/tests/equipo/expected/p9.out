@@ -1,0 +1,2 @@
+Error semantico [6:17]: 
+ la variable 'status' ya fue declarada dentro de este ambito en [5,17]. 

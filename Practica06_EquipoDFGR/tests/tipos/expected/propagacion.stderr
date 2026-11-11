@@ -1,0 +1,21 @@
+Error semantico [1:8]: 
+ la variable 'falta' no ha sido declarada. 
+Error semantico [2:15]: operador '+': se esperaban operandos int; se encontraron bool y int.
+Error semantico [2:28]: operador '-': se esperaban operandos int; se encontraron bool y int.
+Error semantico [3:0]: 
+ la variable 'destino' no ha sido declarada. 
+Error semantico [3:10]: 
+ la variable 'otra' no ha sido declarada. 
+Error semantico [4:4]: 
+ la variable 'desconocida' no ha sido declarada. 
+Error semantico [4:29]: 
+ la variable 'interior' no ha sido declarada. 
+Error semantico [5:7]: 
+ la variable 'ausente' no ha sido declarada. 
+Error semantico [5:24]: 
+ la variable 'fuera' no ha sido declarada. 
+Error semantico [6:17]: asignacion a 'x': se esperaba bool, se encontro int.
+Error semantico [7:0]: asignacion a 'x': se esperaba int, se encontro bool.
+Error semantico [8:4]: 
+ la variable 'x' ya fue declarada dentro de este ambito en [1,4]. 
+Error semantico [8:4]: inicializacion de 'x': se esperaba int, se encontro bool.

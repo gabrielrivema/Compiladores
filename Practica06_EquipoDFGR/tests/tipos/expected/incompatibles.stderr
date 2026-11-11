@@ -1,0 +1,23 @@
+Error semantico [1:4]: inicializacion de 'x': se esperaba int, se encontro bool.
+Error semantico [2:5]: inicializacion de 'b': se esperaba bool, se encontro int.
+Error semantico [3:0]: asignacion a 'x': se esperaba int, se encontro bool.
+Error semantico [4:0]: asignacion a 'b': se esperaba bool, se encontro int.
+Error semantico [5:11]: operador '+': se esperaban operandos int; se encontraron bool y int.
+Error semantico [6:8]: operador '-': se esperaban operandos int; se encontraron int y bool.
+Error semantico [7:11]: operador '*': se esperaban operandos int; se encontraron bool y bool.
+Error semantico [8:8]: operador '/': se esperaban operandos int; se encontraron int y bool.
+Error semantico [9:6]: operador unario '-': se esperaba int, se encontro bool.
+Error semantico [10:11]: operador '<': se esperaban operandos int; se encontraron bool y int.
+Error semantico [11:8]: operador '<=': se esperaban operandos int; se encontraron int y bool.
+Error semantico [12:11]: operador '>': se esperaban operandos int; se encontraron bool y bool.
+Error semantico [13:12]: operador '>=': se esperaban operandos int; se encontraron bool y int.
+Error semantico [14:8]: operador '==': se esperaban operandos del mismo tipo; se encontraron int y bool.
+Error semantico [15:12]: operador '!=': se esperaban operandos del mismo tipo; se encontraron bool y int.
+Error semantico [16:8]: operador '&&': se esperaban operandos bool; se encontraron int y bool.
+Error semantico [17:12]: operador '||': se esperaban operandos bool; se encontraron bool y int.
+Error semantico [18:4]: condicion de if: se esperaba bool, se encontro int.
+Error semantico [18:9]: asignacion a 'x': se esperaba int, se encontro bool.
+Error semantico [18:34]: 
+ la variable 'noexiste' no ha sido declarada. 
+Error semantico [19:7]: condicion de while: se esperaba bool, se encontro int.
+Error semantico [19:12]: asignacion a 'b': se esperaba bool, se encontro int.

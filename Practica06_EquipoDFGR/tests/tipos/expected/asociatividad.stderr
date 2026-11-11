@@ -1,0 +1,2 @@
+Error semantico [1:12]: operador '<': se esperaban operandos int; se encontraron bool y int.
+Error semantico [2:20]: operador '==': se esperaban operandos del mismo tipo; se encontraron bool y int.

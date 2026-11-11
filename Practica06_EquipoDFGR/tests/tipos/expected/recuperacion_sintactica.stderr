@@ -1,0 +1,5 @@
+Error sintactico [1:8]: se esperaba una expresion, pero se encontro ';'.
+Error sintactico [2:8]: se esperaba una expresion, pero se encontro ';'.
+Error sintactico [4:0]: se esperaba ';', pero se encontro 'print'.
+Error sintactico [4:10]: se esperaba una expresion, pero se encontro ')'.
+Error sintactico [5:8]: se esperaba una expresion, pero se encontro ';'.

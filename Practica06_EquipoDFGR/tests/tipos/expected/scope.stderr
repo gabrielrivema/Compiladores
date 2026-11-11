@@ -1,0 +1,6 @@
+Error semantico [2:17]: asignacion a 'x': se esperaba bool, se encontro int.
+Error semantico [2:32]: operador '+': se esperaban operandos int; se encontraron bool y int.
+Error semantico [3:0]: asignacion a 'x': se esperaba int, se encontro bool.
+Error semantico [4:6]: inicializacion de 'local': se esperaba int, se encontro bool.
+Error semantico [5:6]: 
+ la variable 'local' no ha sido declarada. 
